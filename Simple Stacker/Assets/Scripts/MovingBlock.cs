@@ -6,6 +6,7 @@ public class MovingBlock : MonoBehaviour
 {
     [SerializeField] private float speed;
     public Vector3 direction;
+    private bool hasPassedCentre = false;
 
     private bool isOverlapping = false;
     private Collider blockCollider;
@@ -15,6 +16,8 @@ public class MovingBlock : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        hasPassedCentre = false;
+        Debug.Log(transform.name + hasPassedCentre);
         blockCollider = GetComponent<Collider>();
     }
 
@@ -27,12 +30,20 @@ public class MovingBlock : MonoBehaviour
     private void FixedUpdate()
     {
         transform.Translate(direction * Time.deltaTime * speed);
-        if(transform.position.x > 3 ||
-            transform.position.x < - 3||
+        
+        if((transform.position.x > 3 ||
+            transform.position.x < -3 ||
             transform.position.z > 3 ||
-            transform.position.z < -3)
+            transform.position.z < -3) &&
+            hasPassedCentre)
         {
             direction = -direction;
+            hasPassedCentre = false;
+        }
+        
+        if (!hasPassedCentre && Physics.Raycast(blockCollider.bounds.center, Vector3.down, 1f, baseBlocks))
+        {
+            hasPassedCentre = true;
         }
     }
 
@@ -66,12 +77,50 @@ public class MovingBlock : MonoBehaviour
         isOverlapping = Physics.BoxCast(blockCollider.bounds.center, blockCollider.bounds.extents, Vector3.down, out hit, transform.rotation, distance, baseBlocks);
         if (isOverlapping) 
         {
-            Debug.Log("YAY");
+            CutTheBlock();
+            //Debug.Log("YAY");
             return true; 
         }
-        Debug.Log("NAY");
+       // Debug.Log("NAY");
         return false;
     }
 
+    private void CutTheBlock()
+    {
+        //z axis
+        if (transform.position.x == hit.transform.position.x)
+        {
+            //Debug.Log("ZZZ");
+            float distance = Mathf.Abs((hit.transform.position - transform.position).z);
+            transform.localScale = new Vector3(transform.localScale.x,
+                                               transform.localScale.y,
+                                               transform.localScale.z - distance);
+            if (transform.position.z > hit.transform.position.z)
+            {
+                distance *= -1;
+            }
+            transform.position = new Vector3(transform.position.x,
+                                               transform.position.y,
+                                               transform.position.z + distance / 2);
+
+        }
+        //x axis
+        if (transform.position.z == hit.transform.position.z)
+        {
+           // Debug.Log("XXX");
+            float distance = Mathf.Abs((hit.transform.position - transform.position).x);
+            transform.localScale = new Vector3(transform.localScale.x - distance,
+                                               transform.localScale.y,
+                                               transform.localScale.z);
+            if (transform.position.x > hit.transform.position.x)
+            {
+                distance *= -1;
+            }
+            transform.position = new Vector3(transform.position.x + distance / 2,
+                                               transform.position.y,
+                                               transform.position.z);
+        }
+
+    }
 
 }

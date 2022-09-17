@@ -14,8 +14,8 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        SpawnBlock();
         previousBlock = transform.gameObject;
+        SpawnBlock();
     }
 
     // Update is called once per frame
@@ -25,6 +25,7 @@ public class GameManager : MonoBehaviour
         {
             if (currentBlock.GetComponent<MovingBlock>().IsOverlapping())
             {
+                Score++;
                 previousBlock = currentBlock;
                 previousBlock.transform.SetParent(transform);
                 previousBlock.gameObject.layer = LayerMask.NameToLayer("BaseBlocks");
@@ -37,8 +38,15 @@ public class GameManager : MonoBehaviour
 
     private void SpawnBlock()
     {
-        currentBlock = Instantiate(blockPrefab, spawnPosition[posCounter], Quaternion.identity);
+        
+        currentBlock = Instantiate(blockPrefab);
+        currentBlock.transform.localScale = previousBlock.transform.lossyScale;
+        currentBlock.transform.position = previousBlock.transform.position;
+        currentBlock.transform.position += spawnPosition[posCounter];
         currentBlock.GetComponent<MovingBlock>().direction = directions[posCounter];
+        currentBlock.name = Score + "";
+        currentBlock.transform.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.HSVToRGB((Score/50f) % 1f, 1f, 1f));
+        
         posCounter++;
         if (posCounter > 3) { posCounter = 0; }
     }
