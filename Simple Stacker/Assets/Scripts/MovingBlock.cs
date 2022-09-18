@@ -17,7 +17,6 @@ public class MovingBlock : MonoBehaviour
     void Start()
     {
         hasPassedCentre = false;
-        Debug.Log(transform.name + hasPassedCentre);
         blockCollider = GetComponent<Collider>();
     }
 
@@ -90,7 +89,6 @@ public class MovingBlock : MonoBehaviour
         //z axis
         if (transform.position.x == hit.transform.position.x)
         {
-            //Debug.Log("ZZZ");
             float distance = Mathf.Abs((hit.transform.position - transform.position).z);
             transform.localScale = new Vector3(transform.localScale.x,
                                                transform.localScale.y,
@@ -103,11 +101,16 @@ public class MovingBlock : MonoBehaviour
                                                transform.position.y,
                                                transform.position.z + distance / 2);
 
+            CreateOverhangBlock(new Vector3(transform.position.x,
+                                            transform.position.y,
+                                            transform.position.z - distance * 1.5f),
+                                new Vector3(transform.localScale.x,
+                                            transform.localScale.y,
+                                            distance));
         }
         //x axis
         if (transform.position.z == hit.transform.position.z)
         {
-           // Debug.Log("XXX");
             float distance = Mathf.Abs((hit.transform.position - transform.position).x);
             transform.localScale = new Vector3(transform.localScale.x - distance,
                                                transform.localScale.y,
@@ -119,8 +122,29 @@ public class MovingBlock : MonoBehaviour
             transform.position = new Vector3(transform.position.x + distance / 2,
                                                transform.position.y,
                                                transform.position.z);
+
+            CreateOverhangBlock(new Vector3(transform.position.x - distance*1.5f,
+                                                transform.position.y,
+                                                transform.position.z),
+                                    new Vector3(distance,
+                                                transform.localScale.y,
+                                                transform.localScale.z));
         }
 
+
+    }
+
+    private void CreateOverhangBlock(Vector3 pos, Vector3 size)
+    {
+        Material cloneMaterial = new Material(Shader.Find("Standard"));
+
+        GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cube.transform.localScale = size;
+        cube.transform.position = pos;
+        cube.transform.GetComponent<MeshRenderer>().material = cloneMaterial;
+        cube.transform.GetComponent<MeshRenderer>().material.SetColor("_Color",transform.GetComponent<MeshRenderer>().material.GetColor("_Color"));
+        cube.AddComponent<Rigidbody>();
+        Destroy(cube, 3f);
     }
 
 }
