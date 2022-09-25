@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public int Score = 0;
+    private int score = 0;
     [SerializeField] private Vector3[] spawnPosition = new Vector3[4];
     [SerializeField] private Vector3[] directions = new Vector3[4];
     [SerializeField] private GameObject blockPrefab;
@@ -29,7 +29,8 @@ public class GameManager : MonoBehaviour
             if (currentBlock.GetComponent<MovingBlock>().IsOverlapping())
             {
                 GetComponent<AudioSource>().Play();
-                Score++;
+                score++;
+                ScoreManager.Instance.AddPoint();
                 previousBlock = currentBlock;
                 previousBlock.transform.SetParent(transform);
                 previousBlock.gameObject.layer = LayerMask.NameToLayer("BaseBlocks");
@@ -49,8 +50,8 @@ public class GameManager : MonoBehaviour
         currentBlock.transform.position = previousBlock.transform.position;
         currentBlock.transform.position += spawnPosition[posCounter];
         currentBlock.GetComponent<MovingBlock>().direction = directions[posCounter];
-        currentBlock.name = Score + "";
-        currentBlock.transform.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.HSVToRGB((Score/50f) % 1f, 1f, 1f)); //change color to create a rainbow effect
+        currentBlock.name = score + "";
+        currentBlock.transform.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.HSVToRGB((score/50f) % 1f, 1f, 1f)); //change color to create a rainbow effect
         
         posCounter++;
         if (posCounter > 3) { posCounter = 0; }
@@ -60,5 +61,14 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.25f);
         SpawnBlock();
+    }
+
+    public void ResetGame()
+    {
+        foreach (Transform child in transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+        ScoreManager.Instance.ResetScoreText();
     }
 }

@@ -77,10 +77,8 @@ public class MovingBlock : MonoBehaviour
         if (isOverlapping) 
         {
             CutTheBlock();
-            //Debug.Log("YAY");
             return true; 
         }
-       // Debug.Log("NAY");
         return false;
     }
 
