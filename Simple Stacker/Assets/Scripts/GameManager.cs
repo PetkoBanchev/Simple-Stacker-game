@@ -8,14 +8,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Vector3[] spawnPosition = new Vector3[4];
     [SerializeField] private Vector3[] directions = new Vector3[4];
     [SerializeField] private GameObject blockPrefab;
+    [SerializeField] private GameObject newGameButton;
     private GameObject currentBlock;
     private GameObject previousBlock;
-    private int posCounter = 0;
-
+    private Vector3 baseStartingPosition;
     private Vector3 target;
+    private int posCounter = 0;
+    private bool isGameOver = false;
+
     // Start is called before the first frame update
+    private void Awake()
+    {
+        Screen.SetResolution(800, 600, false);
+    }
     void Start()
     {
+        baseStartingPosition = transform.position;
         target = transform.position;
         previousBlock = transform.gameObject;
         SpawnBlock();
@@ -24,7 +32,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown("space"))
+        if (Input.GetKeyDown("space") && !isGameOver)
         {
             if (currentBlock.GetComponent<MovingBlock>().IsOverlapping())
             {
@@ -36,6 +44,11 @@ public class GameManager : MonoBehaviour
                 previousBlock.gameObject.layer = LayerMask.NameToLayer("BaseBlocks");
                 target = new Vector3(transform.position.x, transform.position.y - 0.252f, transform.position.z);
                 StartCoroutine(Delay());
+            }
+            else
+            {
+                newGameButton.SetActive(true);
+                isGameOver = true;
             }
         }
 
@@ -65,10 +78,19 @@ public class GameManager : MonoBehaviour
 
     public void ResetGame()
     {
+        Destroy(currentBlock);
         foreach (Transform child in transform)
         {
-            GameObject.Destroy(child.gameObject);
+            Destroy(child.gameObject);
         }
         ScoreManager.Instance.ResetScoreText();
+        newGameButton.SetActive(false);
+        transform.position = baseStartingPosition;
+        posCounter = 0;
+        score = 0;
+        target = transform.position;
+        previousBlock = transform.gameObject;
+        isGameOver = false; 
+        SpawnBlock();
     }
 }

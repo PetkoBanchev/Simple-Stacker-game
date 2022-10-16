@@ -22,17 +22,18 @@ public class ScoreManager : MonoBehaviour
     {
         highScore = PlayerPrefs.GetInt("highScore", 0);
         scoreText.text = "Score: " + score.ToString();
-        highScoreText.text = "Highscore: " + highScore.ToString();
+        highScoreText.text = "Highscore: " + PlayerPrefs.GetInt("highScore");
         scoreText.color = Color.cyan;
     }
 
     public void AddPoint()
     {
         score++;
+        if (score > highScore)
+            PlayerPrefs.SetInt("highScore", score);
         scoreText.text = "Score: " + score.ToString();
         scoreText.color = Color.HSVToRGB((score / 50f) % 1f, 1f, 1f);
-        if (highScore > score)
-            PlayerPrefs.SetInt("highScore", score);
+        highScoreText.text = "Highscore: " + PlayerPrefs.GetInt("highScore");
     }
 
     public void ResetScoreText()

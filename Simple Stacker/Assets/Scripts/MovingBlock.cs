@@ -46,30 +46,6 @@ public class MovingBlock : MonoBehaviour
         }
     }
 
-    //void OnDrawGizmos()
-    //{
-    //    Gizmos.color = Color.red;
-
-    //    //Check if there has been a hit yet
-    //    if (isOverlapping)
-    //    {
-    //        speed = 0;
-    //        Gizmos.color = Color.green;
-    //        //Draw a Ray forward from GameObject toward the hit
-    //        Gizmos.DrawRay(transform.position, Vector3.down * hit.distance);
-    //        //Draw a cube that extends to where the hit exists
-    //        Gizmos.DrawWireCube(transform.position + Vector3.down * hit.distance, blockCollider.bounds.extents * 2);
-    //    }
-    //    //If there hasn't been a hit yet, draw the ray at the maximum distance
-    //    else
-    //    {
-    //        Gizmos.color = Color.red;
-    //        //Draw a Ray forward from GameObject toward the maximum distance
-    //        Gizmos.DrawRay(transform.position, Vector3.down * blockCollider.bounds.extents.y);
-    //        //Draw a cube at the maximum distance
-    //        Gizmos.DrawWireCube(transform.position + Vector3.down * blockCollider.bounds.extents.y, blockCollider.bounds.extents * 2);
-    //    }
-    //}
     public bool IsOverlapping()
     {
         speed = 0;
@@ -84,64 +60,96 @@ public class MovingBlock : MonoBehaviour
 
     private void CutTheBlock()
     {
+        Vector3 positionOnStop = transform.position; //Caching the stop position so the two new blocks have the same starting positions
         //z axis
-        if (transform.position.x == hit.transform.position.x)
+        if (positionOnStop.x == hit.transform.position.x)
         {
-            float distance = Mathf.Abs((hit.transform.position - transform.position).z);
+            float distance = Mathf.Abs((hit.transform.position - positionOnStop).z);
+            Vector3 direction = -Vector3.forward;
+
             transform.localScale = new Vector3(transform.localScale.x,
                                                transform.localScale.y,
                                                transform.localScale.z - distance);
-            if (transform.position.z > hit.transform.position.z)
+
+            if (positionOnStop.z > hit.transform.position.z)
             {
                 distance *= -1;
+                direction *= -1;
             }
-            transform.position = new Vector3(transform.position.x,
-                                               transform.position.y,
-                                               transform.position.z + distance / 2);
 
-            CreateOverhangBlock(new Vector3(transform.position.x,
-                                            transform.position.y,
-                                            transform.position.z - distance * 1.5f),
+            transform.position = new Vector3(positionOnStop.x,
+                                             positionOnStop.y,
+                                             positionOnStop.z + distance / 2);
+
+            CreateOverhangBlock(new Vector3(positionOnStop.x,
+                                            positionOnStop.y,
+                                            positionOnStop.z),
                                 new Vector3(transform.localScale.x,
                                             transform.localScale.y,
-                                            distance));
+                                            distance),
+                                direction);
         }
         //x axis
-        if (transform.position.z == hit.transform.position.z)
+        if (positionOnStop.z == hit.transform.position.z)
         {
-            float distance = Mathf.Abs((hit.transform.position - transform.position).x);
+            float distance = Mathf.Abs((hit.transform.position - positionOnStop).x);
+            Vector3 direction = -Vector3.right;
+
             transform.localScale = new Vector3(transform.localScale.x - distance,
                                                transform.localScale.y,
                                                transform.localScale.z);
-            if (transform.position.x > hit.transform.position.x)
+
+            if (positionOnStop.x > hit.transform.position.x)
             {
                 distance *= -1;
+                direction *= -1;
             }
-            transform.position = new Vector3(transform.position.x + distance / 2,
-                                               transform.position.y,
-                                               transform.position.z);
 
-            CreateOverhangBlock(new Vector3(transform.position.x - distance*1.5f,
-                                                transform.position.y,
-                                                transform.position.z),
-                                    new Vector3(distance,
-                                                transform.localScale.y,
-                                                transform.localScale.z));
+            transform.position = new Vector3(positionOnStop.x + distance / 2,
+                                               positionOnStop.y,
+                                               positionOnStop.z);
+
+            CreateOverhangBlock(new Vector3(positionOnStop.x,
+                                            positionOnStop.y,
+                                            positionOnStop.z),
+                                new Vector3(distance,
+                                            transform.localScale.y,
+                                            transform.localScale.z),
+                                direction);
         }
 
 
     }
 
-    private void CreateOverhangBlock(Vector3 pos, Vector3 size)
+    private void CreateOverhangBlock(Vector3 pos, Vector3 size, Vector3 dir)
     {
-        Material cloneMaterial = new Material(Shader.Find("Standard"));
 
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         cube.transform.localScale = size;
         cube.transform.position = pos;
-        cube.transform.GetComponent<MeshRenderer>().material = cloneMaterial;
-        cube.transform.GetComponent<MeshRenderer>().material.SetColor("_Color",transform.GetComponent<MeshRenderer>().material.GetColor("_Color"));
+        cube.transform.SetParent(transform);
+
+        if(dir == Vector3.right)
+        {
+            cube.transform.localPosition = new Vector3(cube.transform.localPosition.x + 0.5f, cube.transform.localPosition.y, cube.transform.localPosition.z);
+        }
+        else if( dir == -Vector3.right)
+        {
+            cube.transform.localPosition = new Vector3(cube.transform.localPosition.x - 0.5f, cube.transform.localPosition.y, cube.transform.localPosition.z);
+        }
+        else if(dir == Vector3.forward)
+        {
+            cube.transform.localPosition = new Vector3(cube.transform.localPosition.x, cube.transform.localPosition.y, cube.transform.localPosition.z + 0.5f);
+        }                                                                                                                                             
+        else if(dir == -Vector3.forward)                                                                                                              
+        {                                                                                                                                             
+            cube.transform.localPosition = new Vector3(cube.transform.localPosition.x, cube.transform.localPosition.y, cube.transform.localPosition.z - 0.5f);
+        }
+
         cube.AddComponent<Rigidbody>();
+        cube.transform.GetComponent<Rigidbody>().AddForce(dir * 100);
+        cube.transform.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Standard"));
+        cube.transform.GetComponent<MeshRenderer>().material.SetColor("_Color", transform.GetComponent<MeshRenderer>().material.GetColor("_Color"));
         Destroy(cube, 3f);
     }
 
