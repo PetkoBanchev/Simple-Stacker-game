@@ -16,10 +16,26 @@ public class GameManager : MonoBehaviour
     private int posCounter = 0;
     private bool isGameOver = false;
 
+    private Camera mainCamera;
+    private Vector3 mainCameraDefaultPosition;
+    private float cameraOffset;
+
     // Start is called before the first frame update
     private void Awake()
     {
-        Screen.SetResolution(800, 600, false);
+        if(SystemInfo.deviceType == DeviceType.Desktop)
+        {
+            Screen.SetResolution(1280, 720, false);
+            cameraOffset = 0.25f;
+        }
+        else if(SystemInfo.deviceType == DeviceType.Handheld)
+        {
+            Screen.SetResolution(720, 1280, true);
+            cameraOffset = 0.25f;
+        }
+
+        mainCamera = Camera.main;
+        mainCameraDefaultPosition = mainCamera.transform.position;
     }
     void Start()
     {
@@ -32,7 +48,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown("space") && !isGameOver)
+        if ((Input.GetKeyDown("space") || Input.GetTouch(0).phase == TouchPhase.Began)  && !isGameOver)
         {
             if (currentBlock.GetComponent<MovingBlock>().IsOverlapping())
             {
@@ -42,17 +58,21 @@ public class GameManager : MonoBehaviour
                 previousBlock = currentBlock;
                 previousBlock.transform.SetParent(transform);
                 previousBlock.gameObject.layer = LayerMask.NameToLayer("BaseBlocks");
-                target = new Vector3(transform.position.x, transform.position.y - 0.252f, transform.position.z);
+                target = new Vector3(mainCamera.transform.position.x, mainCamera.transform.position.y + cameraOffset, mainCamera.transform.position.z);
                 StartCoroutine(Delay());
+            
+                //Moves the whole stack of blocks down
+                //mainCamera.transform.position = Vector3.MoveTowards(mainCamera.transform.position, target, Time.deltaTime * 1);
+                mainCamera.transform.position = mainCamera.transform.position + new Vector3(0, cameraOffset, 0);
             }
             else
             {
-                newGameButton.SetActive(true);
                 isGameOver = true;
+                newGameButton.SetActive(true);
             }
+        
         }
 
-        transform.position = Vector3.MoveTowards(transform.position, target, Time.deltaTime * 1);
     }
 
     private void SpawnBlock()
@@ -84,6 +104,7 @@ public class GameManager : MonoBehaviour
             Destroy(child.gameObject);
         }
         ScoreManager.Instance.ResetScoreText();
+        mainCamera.transform.position = mainCameraDefaultPosition;
         newGameButton.SetActive(false);
         transform.position = baseStartingPosition;
         posCounter = 0;
