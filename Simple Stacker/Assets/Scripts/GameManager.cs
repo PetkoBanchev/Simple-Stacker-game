@@ -9,16 +9,18 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Vector3[] directions = new Vector3[4];
     [SerializeField] private GameObject blockPrefab;
     [SerializeField] private GameObject newGameButton;
+    [SerializeField] private GameObject quitGameButton;
     private GameObject currentBlock;
     private GameObject previousBlock;
     private Vector3 baseStartingPosition;
-    private Vector3 target;
     private int posCounter = 0;
     private bool isGameOver = false;
 
     private Camera mainCamera;
     private Vector3 mainCameraDefaultPosition;
-    private float cameraOffset;
+    private float cameraOffset = 0.25f;
+
+    private bool isInputBlocked = false; //prevents double taps/ key presses, to prevent bugs
 
     // Start is called before the first frame update
     private void Awake()
@@ -26,12 +28,10 @@ public class GameManager : MonoBehaviour
         if(SystemInfo.deviceType == DeviceType.Desktop)
         {
             Screen.SetResolution(1280, 720, false);
-            cameraOffset = 0.25f;
         }
         else if(SystemInfo.deviceType == DeviceType.Handheld)
         {
             Screen.SetResolution(720, 1280, true);
-            cameraOffset = 0.25f;
         }
 
         mainCamera = Camera.main;
@@ -40,7 +40,6 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         baseStartingPosition = transform.position;
-        target = transform.position;
         previousBlock = transform.gameObject;
         SpawnBlock();
     }
@@ -48,8 +47,9 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if ((Input.GetKeyDown("space") || Input.GetTouch(0).phase == TouchPhase.Began)  && !isGameOver)
+        if ((Input.GetKeyDown("space") || Input.GetTouch(0).phase == TouchPhase.Began)  && !isGameOver && !isInputBlocked)
         {
+            isInputBlocked = true;
             if (currentBlock.GetComponent<MovingBlock>().IsOverlapping())
             {
                 GetComponent<AudioSource>().Play();
@@ -58,17 +58,16 @@ public class GameManager : MonoBehaviour
                 previousBlock = currentBlock;
                 previousBlock.transform.SetParent(transform);
                 previousBlock.gameObject.layer = LayerMask.NameToLayer("BaseBlocks");
-                target = new Vector3(mainCamera.transform.position.x, mainCamera.transform.position.y + cameraOffset, mainCamera.transform.position.z);
                 StartCoroutine(Delay());
             
-                //Moves the whole stack of blocks down
-                //mainCamera.transform.position = Vector3.MoveTowards(mainCamera.transform.position, target, Time.deltaTime * 1);
+                //Moves the camera up
                 mainCamera.transform.position = mainCamera.transform.position + new Vector3(0, cameraOffset, 0);
             }
             else
             {
                 isGameOver = true;
                 newGameButton.SetActive(true);
+                quitGameButton.SetActive(true);
             }
         
         }
@@ -87,12 +86,13 @@ public class GameManager : MonoBehaviour
         currentBlock.transform.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.HSVToRGB((score/50f) % 1f, 1f, 1f)); //change color to create a rainbow effect
         
         posCounter++;
-        if (posCounter > 3) { posCounter = 0; }
+        if (posCounter > 1) { posCounter = 0; }
     }
 
     IEnumerator Delay()
     {
         yield return new WaitForSeconds(0.25f);
+        isInputBlocked = false;
         SpawnBlock();
     }
 
@@ -106,12 +106,18 @@ public class GameManager : MonoBehaviour
         ScoreManager.Instance.ResetScoreText();
         mainCamera.transform.position = mainCameraDefaultPosition;
         newGameButton.SetActive(false);
+        quitGameButton.SetActive(false);
         transform.position = baseStartingPosition;
         posCounter = 0;
         score = 0;
-        target = transform.position;
         previousBlock = transform.gameObject;
+        isInputBlocked = false;
         isGameOver = false; 
         SpawnBlock();
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
     }
 }

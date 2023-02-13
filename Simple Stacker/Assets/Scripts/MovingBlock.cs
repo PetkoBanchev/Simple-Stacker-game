@@ -14,16 +14,10 @@ public class MovingBlock : MonoBehaviour
     [SerializeField] private float distance;
     [SerializeField] private LayerMask baseBlocks;
     // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         hasPassedCentre = false;
         blockCollider = GetComponent<Collider>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 
     private void FixedUpdate()
@@ -146,10 +140,10 @@ public class MovingBlock : MonoBehaviour
             cube.transform.localPosition = new Vector3(cube.transform.localPosition.x, cube.transform.localPosition.y, cube.transform.localPosition.z - 0.5f);
         }
 
-        cube.AddComponent<Rigidbody>();
-        cube.transform.GetComponent<Rigidbody>().AddForce(dir * 100);
-        cube.transform.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Standard"));
-        cube.transform.GetComponent<MeshRenderer>().material.SetColor("_Color", transform.GetComponent<MeshRenderer>().material.GetColor("_Color"));
+        var rb = cube.AddComponent<Rigidbody>();
+        rb.AddForce(dir * 100);
+        var mr = cube.transform.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Standard"));
+        mr.SetColor("_Color", transform.GetComponent<MeshRenderer>().material.GetColor("_Color"));
         Destroy(cube, 3f);
     }
 
